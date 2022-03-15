@@ -30,19 +30,27 @@ kinesis.startConsumer();
 To take advantage of back-pressure, the client can be piped to a writable stream:
 
 ```js
+const { promisify } = require('util');
 const Kinesis = require('lifion-kinesis');
-const { pipeline } = require('stream');
+const stream = require('stream');
 
-pipeline([
-  new Kinesis(/* options */),
-  new Writable({
+const asyncPipeline = promisify(stream.pipeline);
+const kinesis = new Kinesis({
+  streamName: 'sample-stream'
+  /* other options from AWS.Kinesis */
+});
+
+asyncPipeline(
+  kinesis,
+  new stream.Writable({
     objectMode: true,
     write(data, encoding, callback) {
       console.log(data);
       callback();
     }
   })
-]);
+).catch(console.error);
+kinesis.startConsumer();
 ```
 
 ## Features
@@ -97,6 +105,7 @@ Initializes a new instance of the Kinesis client.
 | [options.encryption] | <code>Object</code> |  | The encryption options to enforce in the stream. |
 | [options.encryption.type] | <code>string</code> |  | The encryption type to use. |
 | [options.encryption.keyId] | <code>string</code> |  | The GUID for the customer-managed AWS KMS key        to use for encryption. This value can be a globally unique identifier, a fully        specified ARN to either an alias or a key, or an alias name prefixed by "alias/". |
+| [options.initialPositionInStream] | <code>string</code> | <code>&quot;LATEST&quot;</code> | The location in the shard from which the Consumer will start         fetching records from when the application starts for the first time and there is no checkpoint for the shard.        Set to LATEST to fetch new data only        Set to TRIM_HORIZON to start from the oldest available data record. |
 | [options.leaseAcquisitionInterval] | <code>number</code> | <code>20000</code> | The interval in milliseconds for how often to        attempt lease acquisitions. |
 | [options.leaseAcquisitionRecoveryInterval] | <code>number</code> | <code>5000</code> | The interval in milliseconds for how often        to re-attempt lease acquisitions when an error is returned from aws. |
 | [options.limit] | <code>number</code> | <code>10000</code> | The limit of records per get records call (only        applicable with `useEnhancedFanOut` is set to `false`) |
@@ -110,7 +119,7 @@ Initializes a new instance of the Kinesis client.
 | [options.s3.nonS3Keys] | <code>Array.&lt;string&gt;</code> | <code>[]</code> | If the `useS3ForLargeItems` option is set to        `true`, the `nonS3Keys` option lists the keys that will be sent normally on the kinesis record. |
 | [options.s3.tags] | <code>string</code> |  | If provided, the client will ensure that the        S3 bucket is tagged with these tags. If the bucket already has tags, they will be merged. |
 | [options.shardCount] | <code>number</code> | <code>1</code> | The number of shards that the newly-created stream        will use (if the `createStreamIfNeeded` option is set) |
-| [options.shouldDeaggregate] | <code>string</code> \| <code>boolean</code> | <code>&quot;auto&quot;</code> | Whethe the method retrieving the records             should expect aggregated records and deaggregate them appropriately. |
+| [options.shouldDeaggregate] | <code>string</code> \| <code>boolean</code> | <code>&quot;auto&quot;</code> | Whether the method retrieving the records             should expect aggregated records and deaggregate them appropriately. |
 | [options.shouldParseJson] | <code>string</code> \| <code>boolean</code> | <code>&quot;auto&quot;</code> | Whether if retrieved records' data should be parsed as JSON or not.        Set to "auto" to only attempt parsing if data looks like JSON. Set to true to force data parse. |
 | [options.statsInterval] | <code>number</code> | <code>30000</code> | The interval in milliseconds for how often to        emit the "stats" event. The event is only available while the consumer is running. |
 | options.streamName | <code>string</code> |  | The name of the stream to consume data from (required) |
