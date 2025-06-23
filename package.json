@@ -94,7 +94,7 @@
   },
   "overrides": {
     "semver": "^7.5.2",
-    "@es-joy/jsdoccomment": "0.52.0",
-    "eslint-plugin-jsdoc": "51.2.1"
+    "@es-joy/jsdoccomment": "^0.52.0",
+    "eslint-plugin-jsdoc": "^51.2.1"
   }
 }
